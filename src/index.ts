@@ -3,6 +3,7 @@ import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-age
 
 import { LspInspectorComponent } from "./lsp/inspector.js";
 import { disposeDefaultLspManager, getLspManager } from "./lsp/manager.js";
+import { appendPostEditDiagnostics } from "./lsp/post-edit-diagnostics.js";
 import {
 	renderDiagnosticsCall,
 	renderDiagnosticsResult,
@@ -129,6 +130,22 @@ export default function (pi: ExtensionAPI): void {
 
 	pi.on("turn_end", async (_event, ctx) => {
 		updateStatus(ctx);
+	});
+
+	pi.on("tool_result", async (event, ctx) => {
+		return appendPostEditDiagnostics(event, async (filePath) => {
+			const result = await lsp_diagnostics.execute(
+				`${event.toolCallId}:post-edit-diagnostics:${filePath}`,
+				{ filePath, severity: "error" },
+				undefined,
+				undefined,
+				ctx,
+			);
+			return result.content
+				.filter((block) => block.type === "text")
+				.map((block) => block.text)
+				.join("\n");
+		});
 	});
 
 	pi.on("session_shutdown", async (_event, ctx) => {
