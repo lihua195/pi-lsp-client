@@ -34,6 +34,7 @@ export function extractMutatedFilePaths(event: ToolResultEvent): string[] {
 	addStringValue(paths, event.input.filePath);
 	addStringArray(paths, event.input.paths);
 	addStringArray(paths, event.input.filePaths);
+	addPatchInput(paths, event.input.input);
 	addPatchFiles(paths, event.input.files);
 	addPatchFiles(paths, event.input.changes);
 	return [...paths];
@@ -50,6 +51,22 @@ function addStringArray(paths: Set<string>, value: unknown): void {
 	for (const item of value) {
 		addStringValue(paths, item);
 	}
+}
+
+function addPatchInput(paths: Set<string>, value: unknown): void {
+	if (typeof value !== "string") return;
+	for (const line of value.split("\n")) {
+		const path = extractPatchHeaderPath(line);
+		if (path !== undefined) paths.add(path);
+	}
+}
+
+function extractPatchHeaderPath(line: string): string | undefined {
+	const prefixes = ["*** Add File: ", "*** Update File: ", "*** Move to: "] as const;
+	for (const prefix of prefixes) {
+		if (line.startsWith(prefix)) return line.slice(prefix.length).trim();
+	}
+	return undefined;
 }
 
 function addPatchFiles(paths: Set<string>, value: unknown): void {

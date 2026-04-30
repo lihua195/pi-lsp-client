@@ -95,6 +95,37 @@ describe("post-edit diagnostics", () => {
 		]);
 	});
 
+	it("#given senpi apply_patch input text #when extracting mutated files #then diagnoses updated file", async () => {
+		// given
+		const event = {
+			...applyPatchEvent([]),
+			input: {
+				input: [
+					"*** Begin Patch",
+					"*** Update File: src/broken.ts",
+					"@@",
+					"-export const value: string = 'ok';",
+					"+export const value: string = 123;",
+					"*** End Patch",
+				].join("\n"),
+			},
+		};
+
+		// when
+		const result = await appendPostEditDiagnostics(event, async (filePath) => {
+			expect(filePath).toBe("src/broken.ts");
+			return "error[typescript] (2322) at 1:13: Type 'number' is not assignable to type 'string'.";
+		});
+
+		// then
+		expect(result?.content.at(-1)).toEqual({
+			type: "text",
+			text:
+				"\n\nLSP errors detected in src/broken.ts, please fix:\n" +
+				"error[typescript] (2322) at 1:13: Type 'number' is not assignable to type 'string'.",
+		});
+	});
+
 	it("#given failed mutation result #when appending post-edit diagnostics #then skips diagnostics", async () => {
 		// given
 		const event = { ...writeEvent("src/broken.ts"), isError: true };
