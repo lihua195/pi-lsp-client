@@ -11,6 +11,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: test (${{ matrix.os }} · node ${{ matrix.node }})
@@ -34,11 +37,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Type check
-        run: npm run typecheck
-
-      - name: Lint
-        run: npm run lint
+      - name: Check (tsgo + biome)
+        run: npm run check
 
       - name: Unit tests
         run: npm test
+
+      - name: Package smoke
+        run: npm pack --dry-run
