@@ -47,7 +47,7 @@ export async function appendPostEditDiagnostics(
 				text: `\n\nLSP errors detected in ${filePath}, please fix:\n${diagnostics}`,
 			})),
 		],
-		widgetLines: formatWidgetLines(blocks),
+		widgetLines: undefined,
 	};
 }
 
@@ -57,20 +57,6 @@ export function syncPostEditDiagnosticsWidget(
 ): void {
 	if (!result) return;
 	setWidget(POST_EDIT_DIAGNOSTICS_WIDGET_KEY, result.widgetLines, { placement: "belowEditor" });
-}
-
-function formatWidgetLines(blocks: DiagnosticBlock[]): string[] {
-	const lines = ["LSP errors detected"];
-	for (const block of blocks) {
-		lines.push(block.filePath);
-		for (const line of block.diagnostics.split("\n")) {
-			const trimmed = line.trim();
-			if (trimmed.length > 0) {
-				lines.push(`  ${trimmed}`);
-			}
-		}
-	}
-	return lines;
 }
 
 export function extractMutatedFilePaths(event: ToolResultEvent): string[] {

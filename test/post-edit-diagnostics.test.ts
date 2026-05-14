@@ -96,11 +96,7 @@ describe("post-edit diagnostics", () => {
 					"error[typescript] (2322) at 1:13: Type 'number' is not assignable to type 'string'.",
 			},
 		]);
-		expect(result?.widgetLines).toEqual([
-			"LSP errors detected",
-			"src/broken.ts",
-			"  error[typescript] (2322) at 1:13: Type 'number' is not assignable to type 'string'.",
-		]);
+		expect(result?.widgetLines).toBeUndefined();
 	});
 
 	it("#given edit tool result with no diagnostics #when appending post-edit diagnostics #then requests widget clear", async () => {
@@ -134,11 +130,7 @@ describe("post-edit diagnostics", () => {
 					"error[typescript] (2304) at 1:1: Cannot find name 'missing'.",
 			},
 		]);
-		expect(result?.widgetLines).toEqual([
-			"LSP errors detected",
-			"src/b.ts",
-			"  error[typescript] (2304) at 1:1: Cannot find name 'missing'.",
-		]);
+		expect(result?.widgetLines).toBeUndefined();
 	});
 
 	it("#given senpi apply_patch input text #when extracting mutated files #then diagnoses updated file", async () => {
@@ -185,7 +177,7 @@ describe("post-edit diagnostics", () => {
 		expect(result).toBeUndefined();
 	});
 
-	it("#given post-edit diagnostics result #when syncing widget #then renders below editor", async () => {
+	it("#given post-edit diagnostics result #when syncing widget #then clears stale widget instead of rendering below editor", async () => {
 		// given
 		const event = writeEvent("src/broken.ts");
 		const result = await appendPostEditDiagnostics(event, async () => "error[typescript] at 1:1: broken");
@@ -197,13 +189,7 @@ describe("post-edit diagnostics", () => {
 		}, result);
 
 		// then
-		expect(calls).toEqual([
-			{
-				key: "pi-lsp",
-				content: ["LSP errors detected", "src/broken.ts", "  error[typescript] at 1:1: broken"],
-				placement: "belowEditor",
-			},
-		]);
+		expect(calls).toEqual([{ key: "pi-lsp", content: undefined, placement: "belowEditor" }]);
 	});
 
 	it("#given clean post-edit diagnostics result #when syncing widget #then clears stale widget", async () => {
@@ -221,7 +207,7 @@ describe("post-edit diagnostics", () => {
 		expect(calls).toEqual([{ key: "pi-lsp", content: undefined, placement: "belowEditor" }]);
 	});
 
-	it("#given registered extension #when write returns LSP errors #then shows widget and returns model-visible diagnostics", async () => {
+	it("#given registered extension #when write returns LSP errors #then returns model-visible diagnostics without footer widget", async () => {
 		// given
 		const handler = captureToolResultHandler();
 		const event = writeEvent("src/broken.ts");
@@ -250,13 +236,7 @@ describe("post-edit diagnostics", () => {
 			undefined,
 			ctx,
 		);
-		expect(widgetCalls).toEqual([
-			{
-				key: "pi-lsp",
-				content: ["LSP errors detected", "src/broken.ts", "  error[typescript] (2322) at 1:13: broken"],
-				placement: "belowEditor",
-			},
-		]);
+		expect(widgetCalls).toEqual([{ key: "pi-lsp", content: undefined, placement: "belowEditor" }]);
 		expect(result).toEqual({
 			content: [
 				{ type: "text", text: "Wrote file successfully." },
